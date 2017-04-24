@@ -133,6 +133,7 @@ function deleteMarkers(markersArray) {
           property_type : property_types,
           property_name : property_name,
           number_crimes: "click again",
+          price: "click again",
           company: company,
           //type: "Rent house",
           phone :  phone,
@@ -153,13 +154,14 @@ function deleteMarkers(markersArray) {
            var comp = "Compañy: " + this.get("company") ; 
            var typ =  "property type: " + this.get("property_type") ;
            crimes(this.get("id_area"), this );
-
+           loadPrice(this);
            //var crimes = "Crimes in 2017: " +  
-           var contentS = "<div><p>" + ad + "<br>" + pho + "<br>" + proN + "<br>" + comp +"<br>"+ typ + "<br>Crimes in community this year: "+ this.get("number_crimes") + "</p></div>";
+           var contentS = "<div><p>" + ad + "<br>" + pho + "<br>" + proN + "<br>" + comp +"<br>"+ typ + "<br>Crimes in community this year: "+ this.get("number_crimes") + "<br>"+"Price: "+ this.get("price") +"</p></div>";
            //alert(content);          // alert(markerSelect.getPosition());
            infowindow = new google.maps.InfoWindow({
             content: contentS
           });
+           
            distance(this.getPosition(), mainMarker.getPosition());
            distanceD(this.getPosition(), mainMarker.getPosition());
            distanceB(this.getPosition(), mainMarker.getPosition());
@@ -168,6 +170,8 @@ function deleteMarkers(markersArray) {
            displayRouteDriving(this.getPosition(),mainMarker.getPosition());
            displayRouteWalking  (this.getPosition(),mainMarker.getPosition());
            displayRouteTransit(this.getPosition(),mainMarker.getPosition());
+           
+
           // markerSelect.setIcon(image);
           // markerSelect.setIcon(image);
            //markerSelect = this;
@@ -243,23 +247,23 @@ function loadPoliceMarks() {
       phone = x[i].getElementsByTagName("phone")[0].attributes.getNamedItem("phone_number").value;
       district = x[i].getElementsByTagName("district")[0].childNodes[0].nodeValue;
       district_name = x[i].getElementsByTagName("district_name")[0].childNodes[0].nodeValue;
-     
-       
-        var mark = new google.maps.Marker({       
-          position : {lat: Number(latituds), lng : Number(longituds)},
-          district: district,
-          district_name : district_name,
-          phone :  phone,
-          address: dr,
-          map: map, 
-          icon: image,
-        });
+
+
+      var mark = new google.maps.Marker({       
+        position : {lat: Number(latituds), lng : Number(longituds)},
+        district: district,
+        district_name : district_name,
+        phone :  phone,
+        address: dr,
+        map: map, 
+        icon: image,
+      });
           //;
           arrayPolice.push(mark);
 
           mark.addListener('click', function() {
            // setCheckedTrue();
-            if(infowindow) infowindow.close();
+           if(infowindow) infowindow.close();
            // alert(" get position " +mainMarker.getPosition());
            var pho =  "Phone: " + this.get("phone") ; 
            var ad  =  "Address: " + this.get("address") ; 
@@ -292,27 +296,27 @@ function loadPoliceMarks() {
 
         });
 
- 
-         
-       }
-       deleteMarkers(arrayPolice);
-    
-    } 
-  }; xhttp.open("GET",url, true);
-  xhttp.send();
 
-}
 
-function checkRent(array ,  check){
-  if(check.checked  == true ){
-    showMarkers(array);
-  }else{
-    deleteMarkers(array);
+        }
+        deleteMarkers(arrayPolice);
+
+      } 
+    }; xhttp.open("GET",url, true);
+    xhttp.send();
+
   }
 
-}
+  function checkRent(array ,  check){
+    if(check.checked  == true ){
+      showMarkers(array);
+    }else{
+      deleteMarkers(array);
+    }
 
-function distance(originS, destinationS){
+  }
+
+  function distance(originS, destinationS){
 
     //Find the distance
       var origin1 = originS; //{lat: 55.93, lng: -3.118} ;
@@ -585,7 +589,7 @@ function distance(originS, destinationS){
 
  }
  function buttonPolice(){
-    var elem = document.getElementById("PoliceButton");
+  var elem = document.getElementById("PoliceButton");
     //alert(elem.style.backgroundColor + myarray.length);
     if( elem.style.backgroundColor == 'rgb(243, 243, 243)' ){
       //alert("ome");
@@ -882,23 +886,90 @@ function deleteMarkersD(markersArray, distanceN) {
 
   }
 
-function crimes(community_area_number, markerC){
-  $.ajax({
-    url: 'https://data.cityofchicago.org/resource/6zsd-86xi.json?$query=SELECT community_area, count(community_area) WHERE community_area = \'' + community_area_number + '\' AND year = 2017 GROUP BY community_area',
-    type: "GET",
-    data: {
-      "$$app_token" : "ONMw6rs4vX99YkE7M5cOetVo9"
-  }
-  }).done(function(data) {
-    if (community_area_number != undefined) {
+  function crimes(community_area_number, markerC){
+    $.ajax({
+      url: 'https://data.cityofchicago.org/resource/6zsd-86xi.json?$query=SELECT community_area, count(community_area) WHERE community_area = \'' + community_area_number + '\' AND year = 2017 AND  (primary_type = "CRIMINAL DAMAGE" OR  primary_type= "THEFT" )   GROUP BY community_area',
+      type: "GET",
+      data: {
+        "$$app_token" : "ONMw6rs4vX99YkE7M5cOetVo9"
+      }
+    }).done(function(data) {
+      if (community_area_number != undefined) {
 
-      markerC.setOptions({number_crimes: data[0].count_community_area });
-
-    } else {
+        markerC.setOptions({number_crimes: data[0].count_community_area });
+      } else {
       //document.getElementById("crimes-2017").innerHTML = "<b>Number of crimes in 2017 in the community</b>: undefined";
-       markerC.setOptions({number_crimes: undefined });
+      markerC.setOptions({number_crimes: undefined });
     }
   });
+  }
+
+
+
+  function loadPrice(marker){
+    var xhttp = new XMLHttpRequest();
+    var myKey ="X1-ZWz1fr209tizgr_7sxq3";
+    //alert("LETSGO");
+    var address = marker.get("address") ; 
+    address = address.split(" ").join("+");
+    address = address.split(".").join("");
+    var url = "http://www.zillow.com/webservice/GetSearchResults.htm?zws-id="+myKey+"&address="+address+"&citystatezip=Chicago&rentzestimate=true";
+    var url_f = "https://cors-anywhere.herokuapp.com/"+url;
+    console.log(url);
+
+
+    xhttp.onreadystatechange = function() {
+      if (this.readyState == 4 && this.status == 200) {
+       var xmlDoc = xhttp.responseXML;
+
+       var i;
+       var x = xmlDoc.getElementsByTagName("text")[0].childNodes[0].nodeValue;
+       var z = xmlDoc.getElementsByTagName("rentzestimate");
+      // var ya = x.getElementsByTagName("latitude");
+      if(x.valueOf() == "Request successfully processed"  && z.length > 0 ){
+        total = 0;
+        count = 0;
+        for( i = 0 ; i < z.length ; i++){
+         lat = xmlDoc.getElementsByTagName("latitude")[i].childNodes[0].nodeValue;
+         long = xmlDoc.getElementsByTagName("longitude")[i].childNodes[0].nodeValue;
+         var myLatlng = new google.maps.LatLng(lat,long);
+         distTest = google.maps.geometry.spherical.computeDistanceBetween(marker.getPosition(), myLatlng);
+         if(distTest < 1200 ){
+
+          price = z[i].getElementsByTagName("amount")[0].childNodes[0].nodeValue;
+         // console.log(count + " " + z.length);
+          total = total + Number(price);
+          count++;
+        }
+      }
+      if(count > 0 ){
+       // console.log("total" +total);
+        total = total/count;  
+        total = parseInt(total,10);
+        //console.log("total" +total);
+        marker.setOptions({price: total});
+
+      }else{
+         marker.setOptions({price: "Not found" });
+
+      }
+      //alert("the rent stimate is:  "+ number_homes);
+     
+    }else{
+
+      marker.setOptions({price: "Not found" });
+
+
+    }
+
+
+
+
+  } 
+}; xhttp.open("GET",url_f, true);
+xhttp.send();
+
+
 }
 
 
